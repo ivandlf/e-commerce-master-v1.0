@@ -26,4 +26,6 @@ public class Productos {
     @Column(name = "codigo")
     private String codigo;
 
+    private Integer cantidad;
+
 }

@@ -32,9 +32,6 @@ public class CarritoServiceImp implements CarritoService{
     private CarritoProductosRepository carritoProductosRepository;
 
 
-    @Autowired
-    private CarritoProductosService carritoProductosService;
-
 
 
 
@@ -51,11 +48,13 @@ public class CarritoServiceImp implements CarritoService{
         carritoDto.setId(carrito.getId());
         carritoDto.setUserId(carrito.getUsuario().getId());
         carritoDto.setUserName(carrito.getUsuario().getNombre());
-        List<CarritoProductos> carritoProductosList = carritoProductosRepository.findByCarrito_Id(carrito.getId()).stream().toList();
+        List<CarritoProductos> carritoProductosList = carritoProductosRepository.findAllByCarritoId(carrito.getId());
         List<ProductoEnCarritoDTO> productoEnCarritoDTOList = new ArrayList<>();
         for (CarritoProductos carritoProductos:
              carritoProductosList) {
-            ProductoEnCarritoDTO productoEnCarritoDTO = new ProductoEnCarritoDTO(carritoProductos.getProductos().getId(), carritoProductos.getQuantity());
+            ProductoEnCarritoDTO productoEnCarritoDTO = new ProductoEnCarritoDTO();
+            productoEnCarritoDTO.setProductoId(carritoProductos.getProductos().getId());
+            productoEnCarritoDTO.setQuantity(carritoProductos.getQuantity());
             productoEnCarritoDTOList.add(productoEnCarritoDTO);
 
         }
@@ -65,7 +64,7 @@ public class CarritoServiceImp implements CarritoService{
             total += productos.getPrecio() * productoList.getQuantity();
 
         }
-        carritoDto.setTotal(total);
+        carritoDto.setTotal(carrito.getTotal());
         carritoDto.setProductosList(productoEnCarritoDTOList);
         return carritoDto;
     }
@@ -77,20 +76,36 @@ public class CarritoServiceImp implements CarritoService{
 
     @Override
     public void save(CarritoDto carritoDto) {
-        Carrito carrito = new Carrito();
         User usuario = userRepository.findById(carritoDto.getUserId()).get();
         Carrito newCarrito = new Carrito();
         newCarrito.setUsuario(usuario);
         int total = 0;
+        List<Productos> productosList = new ArrayList<>();
         List<ProductoEnCarritoDTO> productoEnCarritoDTOList = carritoDto.getProductosList();
-        for (ProductoEnCarritoDTO productoList : productoEnCarritoDTOList) {
-            Productos productos = productosRepository.findById(productoList.getProductoId()).get();
-            total += productos.getPrecio() * productoList.getQuantity();
-        }
-        newCarrito.setTotal(total);
-        carritoRepository.save(newCarrito);
-        carritoProductosService.createCarritoProductos(carritoDto.getProductosList(), newCarrito);
 
+
+
+        List<CarritoProductos> carritoProductosList = new ArrayList<>();
+
+        for (ProductoEnCarritoDTO producto : productoEnCarritoDTOList) {
+            Productos productos = productosRepository.findById(producto.getProductoId()).get();
+            if (productos!=null){
+                total += productos.getPrecio() * producto.getQuantity();
+                productosList.add(productos);
+                System.out.println(productos);
+                CarritoProductos carritoProductos = new CarritoProductos();
+
+                carritoProductos.setCarrito(newCarrito);
+                carritoProductos.setProductos(productos);
+                carritoProductos.setQuantity(producto.getQuantity());
+                carritoProductosList.add(carritoProductos);
+            }
+            newCarrito.setTotal(total);
+            carritoRepository.save(newCarrito);
+
+            carritoProductosRepository.saveAll(carritoProductosList);
+            carritoRepository.save(newCarrito);
+        }
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.terror_al_ejecutar.ecommerce.dto;
 
+import com.terror_al_ejecutar.ecommerce.models.Productos;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
