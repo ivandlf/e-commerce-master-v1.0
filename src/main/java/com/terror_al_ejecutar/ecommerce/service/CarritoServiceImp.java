@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,39 +38,15 @@ public class CarritoServiceImp implements CarritoService{
     public List<CarritoDto> findAll() {
         return carritoRepository.findAll()
                 .stream()
-                .map(this::convertEntityToDto)
+                .map(this::convertEntityToDtoList)
                 .collect(Collectors.toList());
     }
 
-    public CarritoDto convertEntityToDto(Carrito carrito){
-        CarritoDto carritoDto = new CarritoDto();
-        carritoDto.setId(carrito.getId());
-        carritoDto.setUserId(carrito.getUsuario().getId());
-        carritoDto.setUserName(carrito.getUsuario().getNombre());
-        List<CarritoProductos> carritoProductosList = carritoProductosRepository.findAllByCarritoId(carrito.getId());
-        List<ProductoEnCarritoDTO> productoEnCarritoDTOList = new ArrayList<>();
-        for (CarritoProductos carritoProductos:
-             carritoProductosList) {
-            ProductoEnCarritoDTO productoEnCarritoDTO = new ProductoEnCarritoDTO();
-            productoEnCarritoDTO.setProductoId(carritoProductos.getProductos().getId());
-            productoEnCarritoDTO.setQuantity(carritoProductos.getQuantity());
-            productoEnCarritoDTOList.add(productoEnCarritoDTO);
 
-        }
-        int total = 0;
-        for (ProductoEnCarritoDTO productoList : productoEnCarritoDTOList) {
-            Productos productos = productosRepository.findById(productoList.getProductoId()).get();
-            total += productos.getPrecio() * productoList.getQuantity();
-
-        }
-        carritoDto.setTotal(carrito.getTotal());
-        carritoDto.setProductosList(productoEnCarritoDTOList);
-        return carritoDto;
-    }
 
     @Override
-    public Optional<Carrito> findById(Long id) {
-        return carritoRepository.findById(id);
+    public CarritoDto findById(Long id) {
+        return carritoRepository.findById(id).stream().map(this::convertEntityToDtoList).collect(Collectors.toList()).get(0);
     }
 
     @Override
@@ -82,9 +57,6 @@ public class CarritoServiceImp implements CarritoService{
         int total = 0;
         List<Productos> productosList = new ArrayList<>();
         List<ProductoEnCarritoDTO> productoEnCarritoDTOList = carritoDto.getProductosList();
-
-
-
         List<CarritoProductos> carritoProductosList = new ArrayList<>();
 
         for (ProductoEnCarritoDTO producto : productoEnCarritoDTOList) {
@@ -110,6 +82,33 @@ public class CarritoServiceImp implements CarritoService{
 
     @Override
     public void deleteById(Long id) {
+        List<CarritoProductos> carritoProductos = carritoProductosRepository.findAllByCarritoId(id);
+        carritoProductosRepository.deleteAll(carritoProductos);
         carritoRepository.deleteById(id);
+    }
+
+    public CarritoDto convertEntityToDtoList(Carrito carrito){
+        CarritoDto carritoDto = new CarritoDto();
+        carritoDto.setId(carrito.getId());
+        carritoDto.setUserId(carrito.getUsuario().getId());
+        carritoDto.setUserName(carrito.getUsuario().getNombre());
+        List<CarritoProductos> carritoProductosList = carritoProductosRepository.findAllByCarritoId(carrito.getId());
+        List<ProductoEnCarritoDTO> productoEnCarritoDTOList = new ArrayList<>();
+
+
+        carritoProductosList.stream().forEach(carritoProductos ->{
+            ProductoEnCarritoDTO productoEnCarritoDTO = new ProductoEnCarritoDTO();
+            productoEnCarritoDTO.setProductoId(carritoProductos.getProductos().getId());
+            productoEnCarritoDTO.setQuantity(carritoProductos.getQuantity());
+            productoEnCarritoDTOList.add(productoEnCarritoDTO);
+        });
+
+        productoEnCarritoDTOList.stream().forEach(producto -> {
+            Productos productos = productosRepository.findById(producto.getProductoId()).get();
+        });
+
+        carritoDto.setTotal(carrito.getTotal());
+        carritoDto.setProductosList(productoEnCarritoDTOList);
+        return carritoDto;
     }
 }

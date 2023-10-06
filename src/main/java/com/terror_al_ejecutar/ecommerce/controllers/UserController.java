@@ -35,4 +35,5 @@ public class UserController {
         userService.deleteById(id);
         return ResponseEntity.ok("usuario eliminado con exito");
     }
+
 }

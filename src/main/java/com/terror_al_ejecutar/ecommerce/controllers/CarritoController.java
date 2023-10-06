@@ -1,15 +1,12 @@
 package com.terror_al_ejecutar.ecommerce.controllers;
 
 import com.terror_al_ejecutar.ecommerce.dto.CarritoDto;
-import com.terror_al_ejecutar.ecommerce.models.Carrito;
-import com.terror_al_ejecutar.ecommerce.models.User;
 import com.terror_al_ejecutar.ecommerce.service.CarritoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 public class CarritoController {
@@ -21,7 +18,7 @@ public class CarritoController {
     }
 
     @GetMapping("api/carrito/{id}")
-    public Optional<Carrito> findCarritoById(@PathVariable Long id){
+    public CarritoDto findCarritoById(@PathVariable Long id){
         return carritoService.findById(id);
     }
 
